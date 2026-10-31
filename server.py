@@ -1,47 +1,53 @@
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
 
-# Create a list called 'events' with a couple of sample event dictionaries
+# Sample events
 events = [
-    {"id":1, "title": "Yoga in the park" },
-    {"id":2, "title": "Lake 5k run"}
+    {"id": 1, "title": "Yoga in the park"},
+    {"id": 2, "title": "Lake 5k run"}
 ]
 
 
-
-# TASK: Create a route for "/"
-# This route should return a JSON welcome message
+# Welcome route
 @app.route("/", methods=["GET"])
 def welcome():
     return jsonify({"message": "Welcome!"}), 200
 
-# TASK: Create a GET route for "/events"
-# This route should return the full list of events as JSON
+
+# Get all events
 @app.route("/events", methods=["GET"])
 def get_events():
     return jsonify(events), 200
 
-# TASK: Create a POST route for "/events"
-# This route should:
-# 1. Get the JSON data from the request
-# 2. Validate that "title" is provided
-# 3. Create a new event with a unique ID and the provided title
-# 4. Add the new event to the events list
-# 5. Return the new event with status code 201
 
-@app.route("/events/<int:id>", methods=["POST"])
+# Create a new event
+@app.route("/events", methods=["POST"])
 def add_event():
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
-    new_id = max([e for e in events]) + 1 if events else 1
-    new_event = {"id": new_id, "title": data["title"]}
+    # Validate the request data
+    if not data or not isinstance(data, dict) or not data.get("title"):
+        return jsonify({"error": "Title is required"}), 400
 
+    # Generate a unique ID
+    new_id = max([event["id"] for event in events]) + 1 if events else 1
+
+    # Create the new event
+    new_event = {
+        "id": new_id,
+        "title": data["title"]
+    }
+
+    # Add the event to the list
     events.append(new_event)
 
-    return jsonify(new_event), 201 
+    # Return the new event
+    return jsonify(new_event), 201
+
 
 if __name__ == "__main__":
     app.run(debug=True)
